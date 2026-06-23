@@ -113,6 +113,10 @@ Se crearon tres variables clave con alto poder discriminativo:
 | **Random Forest (Optimizado)** | **~0.730** | **~0.870** | **~0.780** |
 | XGBoost | Competitivo | — | — |
 
+nota!!!
+subido el link del models: 
+https://drive.google.com/drive/folders/1gxF19ae--2I6pIoopKe_d0XLvNluxLE6
+
 
 ## Conclusiones Principales
 
