@@ -165,6 +165,10 @@ Se crearon tres variables con alto poder discriminativo:
 | XGB Baseline | 0.7191 | 0.7612 | 0.8357 | 0.6310 |
 | XGB Optimizado | 0.7372 | 0.7849 | 0.8250 | 0.6662 |
 
+nota!!!
+subido el link del models: 
+https://drive.google.com/drive/folders/1gxF19ae--2I6pIoopKe_d0XLvNluxLE6
+
 
 ## Conclusiones Principales
 
