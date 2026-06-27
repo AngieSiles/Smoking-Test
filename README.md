@@ -4,8 +4,7 @@
 
 Este proyecto tiene como objetivo desarrollar un modelo de Machine Learning capaz de **predecir si un paciente es fumador o no**, basándose en sus características biométricas y resultados de análisis médicos (clasificación binaria).
 
-Dado que en el ámbito de la salud la detección precisa es fundamental y existe un ligero desbalance de clases en los datos originales, la métrica principal elegida para evaluar el desempeño de los modelos es el **F1-Score** sobre la clase positiva (fumador), buscando un equilibrio óptimo entre la precisión y el recall.
-
+Dado que en el ámbito de la salud la detección precisa es fundamental y existe un ligero desbalance de clases en los datos originales, la métrica principal elegida para evaluar el desempeño de los modelos es el **F1-Score** sobre la clase positiva (fumador)
 
 ## Instrucciones de Ejecución y Entorno
 
@@ -54,7 +53,56 @@ pip install pandas numpy scikit-learn xgboost matplotlib seaborn joblib
 
 ##  Estructura del Proyecto
 
-```raw
+# Predicción de Tabaquismo — Smoking Dataset 🚬
+
+## Descripción y Objetivo del Proyecto
+
+Este proyecto tiene como objetivo desarrollar un modelo de Machine Learning capaz de **predecir si un paciente es fumador o no**, basándose en sus características biométricas y resultados de análisis médicos (clasificación binaria).
+
+Dado que en el ámbito de la salud la detección precisa es fundamental y existe un ligero desbalance de clases en los datos originales, la métrica principal elegida para evaluar el desempeño de los modelos es el **F1-Score** sobre la clase positiva (fumador), buscando un equilibrio óptimo entre la precisión y el recall.
+
+
+## Instrucciones de Ejecución y Entorno
+
+Para reproducir este proyecto en tu máquina local, sigue estos pasos:
+
+### 1. Clonar el repositorio
+
+```bash
+git clone https://github.com/AngieSiles/Smoking-Test
+cd Smoking-Test
+```
+
+### 2. Configurar el entorno virtual
+
+Se recomienda utilizar **Python 3.9 o superior**.
+
+```bash
+python -m venv venv
+
+# En Windows:
+venv\Scripts\activate
+
+# En macOS/Linux:
+source venv/bin/activate
+```
+
+### 3. Ejecución del código
+
+Ejecutar las notebooks en el siguiente orden desde Jupyter:
+
+| Orden | Notebook | Descripción |
+|-------|----------|-------------|
+| 1–2 | `01_...` / `02_eda.ipynb` | Ingesta de datos y Análisis Exploratorio (EDA) |
+| 3 | `03_procesamiento.ipynb` | Genera el dataset limpio y escalado en `data/processed/` |
+| 4 | `04_entrenamiento_y_optimizacion.ipynb` | Entrena los modelos, busca los mejores hiperparámetros y guarda el modelo final en `models/` |
+| 5 | `05_validacion.ipynb` | Evalúa el modelo guardado y muestra métricas e importancia de variables |
+| 6 | `06_prediccion.ipynb` | Toma datos nuevos de `data/raw/`, aplica el pipeline de inferencia y exporta resultados a `data/predictions/` |
+
+
+## Estructura del Proyecto
+
+```
 Smoking-Test/
 │
 ├── data/
@@ -63,9 +111,9 @@ Smoking-Test/
 │   └── predictions/         # Resultados de las inferencias (nuevas_predicciones.csv)
 │
 ├── models/                  # Artefactos guardados para reproducción y producción
-│   ├── models_guardado.joblib
+│   ├── modelo_final.joblib
 │   ├── feature_names.joblib
-│   └── scaler_age.joblib
+│   └── scaler_full.joblib
 │
 ├── notebooks/               # Jupyter Notebooks enumeradas secuencialmente
 │   ├── 01_lectura_y_discovery.ipynb
@@ -83,12 +131,11 @@ Smoking-Test/
 
 ### 1. Selección y Limpieza de Features
 
-- Se descartaron variables con correlación inferior a **0.10** con la variable objetivo y sin separación visual en el EDA (`eyesight`, `hearing`, `urine_protein`, `fasting_blood_sugar`, `tartar`, etc.).
-- Se eliminaron variables redundantes o colineales: `weight_kg` y `height_cm` (colineales con `waist_cm`); `cholesterol` y `ldl` (redundantes frente al perfil lipídico combinado).
+- Se descartaron variables por analisis con la variable objetivo y sin separación visual en el EDA (`eyesight`, `hearing`, `urine_protein`, `fasting_blood_sugar`, etc.).
 
 ### 2. Feature Engineering
 
-Se crearon tres variables clave con alto poder discriminativo:
+Se crearon tres variables con alto poder discriminativo:
 
 | Variable | Composición | Justificación |
 |----------|-------------|---------------|
@@ -99,25 +146,32 @@ Se crearon tres variables clave con alto poder discriminativo:
 ### 3. Escalado y Manejo de Outliers
 
 - Limpieza de outliers mediante el método del **Rango Intercuartílico (IQR)**, eliminando únicamente registros anómalos multivariados (~0.3% del dataset).
-- Aplicación de **StandardScaler** para normalizar la variable de edad, guardando el objeto para garantizar una inferencia matemáticamente idéntica en producción.
+- Aplicación de **StandardScaler** sobre todas las variables numéricas continuas (excluyendo binarias como `gender`, `tartar`, `dental_caries`), guardando el objeto `scaler_full.joblib` para garantizar una inferencia matemáticamente idéntica en producción.
 
 ### 4. Entrenamiento y Optimización
 
-- **Baselines:** Regresión Logística, Random Forest y XGBoost con `class_weight='balanced'` para mitigar el desbalance de clases (63/37).
-- **Optimización:** `RandomizedSearchCV` con validación cruzada estratificada (5 folds).
-- **Modelo ganador:** Random Forest Optimizado.
+- **Baselines:** Regresión Logística, Random Forest y XGBoost con `class_weight='balanced'` / `scale_pos_weight` para mitigar el desbalance de clases (63/37).
+- **Optimización:** `RandomizedSearchCV` con validación cruzada estratificada (5 folds), métrica **F1-Score** sobre la clase positiva.
+- **Modelo ganador:** Random Forest Baseline por mayor F1-Score en test.
 
-| Modelo | F1-Score | ROC-AUC | Accuracy |
-|--------|----------|---------|----------|
-| Regresión Logística | Alto recall, baja precisión | — | — |
-| **Random Forest (Optimizado)** | **~0.730** | **~0.870** | **~0.780** |
-| XGBoost | Competitivo | — | — |
+#### Resultados completos
+
+| Modelo | F1 | Accuracy | Recall | Precision |
+|--------|----|----------|--------|-----------|
+| LR Baseline | 0.7087 | 0.7266 | 0.9095 | 0.5805 |
+| LR Optimizado | 0.7085 | 0.7268 | 0.9078 | 0.5809 |
+| **RF Baseline** | **0.7506** | **0.7962** | **0.8385** | **0.6793** |
+| RF Optimizado | 0.7494 | 0.7960 | 0.8343 | 0.6802 |
+| XGB Baseline | 0.7191 | 0.7612 | 0.8357 | 0.6310 |
+| XGB Optimizado | 0.7372 | 0.7849 | 0.8250 | 0.6662 |
 
 
 ## Conclusiones Principales
 
-**La ingeniería de características fue el factor diferencial:** el preprocesamiento, la eliminación de redundancias y la creación de variables como `liver_score` y `lipid_ratio` tuvieron un impacto más determinante en el rendimiento predictivo que la optimización exhaustiva de hiperparámetros (cuyo aporte marginal fue de **+0.013** en el F1-Score).
+**La optimización de hiperparámetros tuvo impacto marginal:** la ganancia fue de +0.018 en XGBoost y prácticamente nula en LR y RF (+0.000 / -0.001), lo que indica que el límite de rendimiento está determinado principalmente por los datos y el feature engineering, no por los hiperparámetros. El RF Baseline superó a su versión optimizada, lo que refuerza esta conclusión.
 
-**Importancia de variables:** según el modelo Random Forest, las variables fisiológicas más predictivas son el género, el nivel de hemoglobina y los indicadores de función hepática y lipídica.
+**Modelo seleccionado — Random Forest Baseline** con F1=0.7506, Accuracy=0.7962, Recall=0.8385 y Precision=0.6793. Ofrece el mejor balance entre precisión y recall: detecta el 84% de los fumadores manteniendo una precisión aceptable.
 
-**Pipeline Reproducible:** se construyó un pipeline de inferencia  que automatiza la creación de variables y el escalado, previniendo errores por columnas faltantes 
+**Importancia de variables:** las variables fisiológicas más predictivas son el género, el nivel de hemoglobina y los indicadores de función hepática (`liver_score`) y lipídica (`lipid_ratio`), validando el feature engineering realizado.
+
+**Pipeline reproducible:** se construyó un pipeline de inferencia (`aplicar_pipeline`) que automatiza el encoding, la creación de variables derivadas y el escalado, previniendo errores por columnas faltantes o tipos de datos incorrectos al momento de predecir sobre datos nuevos.
